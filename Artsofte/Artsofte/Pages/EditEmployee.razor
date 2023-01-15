@@ -1,0 +1,131 @@
+﻿@page "/Employee/{Id}"
+@using Artsofte.Services;
+@using ArtsofteDbModel.Entities;
+
+<h3>Employee</h3>
+
+<NavLink class="nav-link" href="/">
+    <button class="btn btn-primary"> Back </button>
+</NavLink>
+@if (employee != null)
+{
+    if (!lang.Any() || !department.Any())
+    {
+        <h1>
+            Please add programming languages or departmenrs on another pages!!!
+        </h1>
+    }
+    else
+    {
+
+        <RadzenCard>
+            <p>Name</p>
+            <RadzenTextBox @bind-Value=@employee.Name Placeholder="Name" Class="w-100" Disabled=btnDisable />
+            <br />
+            <br />
+            <p>Surname</p>
+            <RadzenTextBox @bind-Value=@employee.Surname Placeholder="Surname" Class="w-100" Disabled=btnDisable />
+            <br />
+            <br />
+            <p>Age</p>
+            <RadzenNumeric TValue="int" @bind-Value=@employee.Age Placeholder="Age" Class="w-100" Disabled=btnDisable />
+            <br />
+            <br />
+            <p>Department</p>
+            <RadzenDropDown @bind-Value=@employee.DepartmentId Class="w-100"
+                    TValue="int"
+                    Data=@department
+                    TextProperty="Name"
+                    ValueProperty="Id"
+                    Disabled=btnDisable
+                    Change=@(args => OnChange(args, "DropDown")) />
+            <br />
+            <br />
+            <p>Programming language</p>
+            <RadzenDropDown @bind-Value=@employee.ProgrammingLanguageId Class="w-100"
+                    TValue="int"
+                    Data=@lang
+                    TextProperty="Name"
+                    ValueProperty="Id"
+                    Disabled=btnDisable
+                    Change=@(args => OnChange(args, "DropDown")) />
+            <br />
+            <br />
+            @if (employee.DepartmentId != default(int) && employee.ProgrammingLanguageId != default(int))
+            {
+                <button class="btn btn-primary" @onclick="Method" disabled="@btnDisable"> Save </button>
+            }
+            <br />
+            @if (result.Item1)
+            {
+                <h3>@result.Item2</h3>
+            }
+            else
+            {
+                <h3>@result.Item2</h3>
+            }
+        </RadzenCard>
+    }
+}
+else
+{
+    <div class="lds-ring">
+        <div>
+        </div>
+        <div>
+        </div>
+        <div>
+        </div>
+        <div>
+        </div>
+    </div>
+}
+
+@code {
+    bool btnDisable = false;
+    (bool, string) result;
+
+    [Parameter]
+    public string? Id { get; set; }
+    Employee employee;
+    List<ProgrammingLanguage> lang;
+    List<Department> department;
+    [Inject]
+    private ArtsofteDbManager _dbManager { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id != "-1")
+        {
+            await GetData();
+        }
+        else
+        {
+            employee = new Employee();
+        }
+        lang = _dbManager.AllProgrammingLanguage().ToList();
+        department = _dbManager.AllDepartments().ToList();
+    }
+    protected Task GetData()
+    {
+        return Task.Run(() =>
+        {
+            employee = _dbManager.GetEmployee(int.Parse(Id)).Result;
+        });
+    }
+    protected async Task Method()
+    {
+        btnDisable = true;
+        await UpdateData();
+        btnDisable = false;
+        StateHasChanged();
+    }
+    protected Task UpdateData()
+    {
+        return Task.Run(() => result = _dbManager.AddOrUpdateEmployee(employee).Result);
+    }
+    void OnChange(object value, string name)
+    {
+        var str = value is IEnumerable<object> ? string.Join(", ", (IEnumerable<object>)value) : value;
+    }
+}

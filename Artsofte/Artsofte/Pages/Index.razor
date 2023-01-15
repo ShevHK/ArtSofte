@@ -1,0 +1,95 @@
+﻿@page "/"
+@using Artsofte.Services;
+@using ArtsofteDbModel.Entities;
+@inject NavigationManager uriHelper;
+
+<PageTitle>Emploee</PageTitle>
+<h1>Emploee</h1>
+<br />
+@if (load)
+{
+    if (noData)
+    {
+        <h1>No information yet. Please, add any!</h1>
+    }
+    else
+    {
+        edit = "/Employee/" + selected.First().Id;
+        <RadzenDataGrid AllowFiltering="true" AllowSorting="true" Data="@_model" TItem="Employee" ColumnWidth="100%"
+                SelectionMode="DataGridSelectionMode.Single" @bind-Value=@selected>
+            <Columns>
+                <RadzenDataGridColumn TItem="Employee" Property="Name" Title="Name" />
+                <RadzenDataGridColumn TItem="Employee" Property="Surname" Title="Surname" />
+                <RadzenDataGridColumn TItem="Employee" Property="Age" Title="Age" />
+                <RadzenDataGridColumn TItem="Employee" Property="Department.floor" Title="Department" />
+                <RadzenDataGridColumn TItem="Employee" Property="ProgrammingLanguage.Name" Title="Language" />
+            </Columns>
+        </RadzenDataGrid>
+    }
+    <br />
+    <br />
+    <NavLink class="nav-link" href="Employee/-1">
+        <button class="btn btn-primary"> Add </button>
+    </NavLink>
+    <br />
+    <NavLink class="nav-link" href=@edit>
+        <button class="btn btn-primary"> Edit </button>
+    </NavLink>
+    <br />
+    <button class="btn btn-primary" @onclick="DeleteEmployee" disabled=@noData> Delete </button>
+}
+else
+{
+    <div class="lds-ring">
+        <div>
+        </div>
+        <div>
+        </div>
+        <div>
+        </div>
+        <div>
+        </div>
+    </div>
+}
+
+@code
+{
+    string edit;
+    bool load;
+    bool noData;
+    [Inject]
+    private ArtsofteDbManager _dbManager { get; set; }
+
+    private IEnumerable<Employee> _model;
+    private IList<Employee> selected;
+
+    async void ClearSelection()
+    {
+        selected = null;
+    }
+    protected override async Task OnInitializedAsync()
+    {
+
+        _model = _dbManager.AllIncludingEmployee(
+            employee => employee.Department,
+            employee => employee.ProgrammingLanguage
+        );
+        if (_model.Any())
+        {
+            selected = _model.Take(1).ToList();
+            edit = "/Employee/" + selected.First().Id;
+        }
+        else
+        {
+            noData = true;
+            edit = "/Employee/-1";
+        }
+        load = true;
+    }
+    private async Task DeleteEmployee()
+    {
+        await _dbManager.DeleteEmployee(selected.First().Id);
+        uriHelper.NavigateTo(uriHelper.Uri, forceLoad: true);
+    }
+
+}

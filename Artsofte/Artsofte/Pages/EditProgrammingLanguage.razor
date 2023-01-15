@@ -1,0 +1,87 @@
+﻿@page "/EditProgrammingLanguage/{Id}"
+@using Artsofte.Services;
+@using ArtsofteDbModel.Entities;
+<h3>Programming Language</h3>
+
+<NavLink class="nav-link" href="programmingLanguages">
+    <button class="btn btn-primary"> Back </button>
+</NavLink>
+@if (programmingLanguage != null)
+{
+
+    <RadzenCard>
+        <p>Name</p>
+        <br />
+        <RadzenTextBox @bind-Value=@programmingLanguage.Name Placeholder="Name" Class="w-100" Disabled=btnDisable />
+        <br />
+        <br />
+        <button class="btn btn-primary" @onclick="Method" disabled="@btnDisable"> Save </button>
+        <br />
+        @if (result.Item1)
+        {
+            <h3>@result.Item2</h3>
+        }
+        else
+        {
+            <h3>@result.Item2</h3>
+        }
+    </RadzenCard>
+}
+else
+{
+    <div class="lds-ring">
+        <div>
+        </div>
+        <div>
+        </div>
+        <div>
+        </div>
+        <div>
+        </div>
+    </div>
+}
+
+@code {
+    bool btnDisable = false;
+    (bool, string) result;
+
+    [Parameter]
+    public string? Id { get; set; }
+    ProgrammingLanguage programmingLanguage;
+    [Inject]
+    private ArtsofteDbManager _dbManager { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id != "-1")
+        {
+            await GetData();
+        }
+        else
+        {
+            programmingLanguage = new ProgrammingLanguage();
+        }
+    }
+    protected Task GetData()
+    {
+        return Task.Run(() =>
+        {
+            programmingLanguage = _dbManager.GetProgrammingLanguage(int.Parse(Id)).Result;
+        });
+    }
+    protected async Task Method()
+    {
+        btnDisable = true;
+        await UpdateData();
+        btnDisable = false;
+        StateHasChanged();
+    }
+    protected Task UpdateData()
+    {
+        return Task.Run(() => result = _dbManager.AddOrUpdateProgrammingLanguages(programmingLanguage).Result);
+    }
+    void OnChange(object value, string name)
+    {
+        var str = value is IEnumerable<object> ? string.Join(", ", (IEnumerable<object>)value) : value;
+    }
+}

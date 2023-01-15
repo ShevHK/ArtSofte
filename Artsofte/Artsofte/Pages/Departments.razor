@@ -1,0 +1,88 @@
+﻿@page "/departments"
+@using Artsofte.Services;
+@using ArtsofteDbModel.Entities;
+@inject NavigationManager uriHelper;
+
+<PageTitle>Departments</PageTitle>
+
+<h3>Departments</h3>
+@if (load)
+{
+    if (noData)
+    {
+        <h1>No information yet. Please, add any!</h1>
+    }
+    else
+    {
+        edit = "/EditDepartment/" + selected.First().Id;
+
+        <RadzenDataGrid AllowFiltering="true" AllowSorting="true" Data="@_model" TItem="Department" ColumnWidth="100%"
+                SelectionMode="DataGridSelectionMode.Single" @bind-Value=@selected>
+            <Columns>
+                <RadzenDataGridColumn TItem="Department" Property="Name" Title="Name" />
+                <RadzenDataGridColumn TItem="Department" Property="floor" Title="Floor" />
+            </Columns>
+        </RadzenDataGrid>
+    }
+    <br />
+    <br />
+    <NavLink class="nav-link" href="EditDepartment/-1">
+        <button class="btn btn-primary"> Add </button>
+    </NavLink>
+    <br />
+    <NavLink class="nav-link" href=@edit>
+        <button class="btn btn-primary"> Edit </button>
+    </NavLink>
+    <br />
+    <button class="btn btn-primary" @onclick="DeleteDepartment" disabled="@noData"> Delete </button>
+}
+else
+{
+    <div class="lds-ring">
+        <div>
+        </div>
+        <div>
+        </div>
+        <div>
+        </div>
+        <div>
+        </div>
+    </div>
+}
+@code {
+    string edit;
+    bool load;
+    bool noData;
+
+    [Inject]
+    private ArtsofteDbManager _dbManager { get; set; }
+
+    private IEnumerable<Department> _model;
+    private IList<Department> selected;
+
+    async void ClearSelection()
+    {
+        selected = null;
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        _model = _dbManager.AllDepartments();
+        if (_model.Any())
+        {
+            selected = _model.Take(1).ToList();
+            edit = "/EditDepartment/" + selected.First().Id;
+        }
+        else
+        {
+            noData = true;
+            edit = "/EditDepartment/-1";
+        }
+        load = true;
+    }
+
+    private async Task DeleteDepartment()
+    {
+        await _dbManager.DeleteDepartment(selected.First().Id);
+        uriHelper.NavigateTo(uriHelper.Uri, forceLoad: true);
+    }
+}

@@ -1,0 +1,91 @@
+﻿@page "/EditDepartment/{Id}"
+@using Artsofte.Services;
+@using ArtsofteDbModel.Entities;
+
+<h3>Department</h3>
+
+<NavLink class="nav-link" href="departments">
+    <button class="btn btn-primary"> Back </button>
+</NavLink>
+@if (department != null)
+{
+    <RadzenCard>
+        <p>Name</p>
+        <br />
+        <RadzenTextBox @bind-Value=@department.Name Placeholder="Name" Class="w-100" Disabled=btnDisable />
+        <br />
+        <br />
+        <p>Floor</p>
+        <RadzenNumeric TValue="int" @bind-Value=@department.floor Placeholder="Floor" Class="w-100" Disabled=btnDisable />
+        <br />
+        <br />
+        <button class="btn btn-primary" @onclick="Method" disabled="@btnDisable"> Save </button>
+        <br />
+        @if (result.Item1)
+        {
+            <h3>@result.Item2</h3>
+        }
+        else
+        {
+            <h3>@result.Item2</h3>
+        }
+    </RadzenCard>
+}
+else
+{
+    <div class="lds-ring">
+        <div>
+        </div>
+        <div>
+        </div>
+        <div>
+        </div>
+        <div>
+        </div>
+    </div>
+}
+
+@code {
+    bool btnDisable = false;
+    (bool, string) result;
+
+    [Parameter]
+    public string? Id { get; set; }
+    Department department;
+    [Inject]
+    private ArtsofteDbManager _dbManager { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id != "-1")
+        {
+            await GetData();
+        }
+        else
+        {
+            department = new Department();
+        }
+    }
+    protected Task GetData()
+    {
+        return Task.Run(() =>
+        {
+            department = _dbManager.GetDepartment(int.Parse(Id)).Result;
+        });
+    }
+    protected async Task Method()
+    {
+        btnDisable = true;
+        await UpdateData();
+        btnDisable = false;
+        StateHasChanged();
+    }
+    protected Task UpdateData()
+    {
+        return Task.Run(() => result = _dbManager.AddOrUpdateDepartment(department).Result);
+    }
+    void OnChange(object value, string name)
+    {
+        var str = value is IEnumerable<object> ? string.Join(", ", (IEnumerable<object>)value) : value;
+    }
+}

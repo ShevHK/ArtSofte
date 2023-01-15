@@ -1,0 +1,87 @@
+﻿@page "/programmingLanguages"
+@using Artsofte.Services;
+@using ArtsofteDbModel.Entities;
+@inject NavigationManager uriHelper;
+
+<PageTitle>Programming Languages</PageTitle>
+
+<h3>Programming Languages</h3>
+@if (load)
+{
+    if (noData)
+    {
+        <h1>No information yet. Please, add any!</h1>
+    }
+    else
+    {
+        edit = "/EditProgrammingLanguage/" + selected.First().Id;
+
+        <RadzenDataGrid AllowFiltering="true" AllowSorting="true" Data="@_model" TItem="ProgrammingLanguage" ColumnWidth="100%"
+                SelectionMode="DataGridSelectionMode.Single" @bind-Value=@selected>
+            <Columns>
+                <RadzenDataGridColumn TItem="ProgrammingLanguage" Property="Name" Title="Name" />
+            </Columns>
+        </RadzenDataGrid>
+    }
+    <br />
+    <br />
+    <NavLink class="nav-link" href="EditProgrammingLanguage/-1">
+        <button class="btn btn-primary"> Add </button>
+    </NavLink>
+    <br />
+    <NavLink class="nav-link" href=@edit>
+        <button class="btn btn-primary"> Edit </button>
+    </NavLink>
+    <br />
+    <button class="btn btn-primary" @onclick="DeleteLanguage" disabled="@noData"> Delete </button>
+}
+else
+{
+    <div class="lds-ring">
+        <div>
+        </div>
+        <div>
+        </div>
+        <div>
+        </div>
+        <div>
+        </div>
+    </div>
+}
+@code {
+    string edit;
+    bool load;
+    bool noData;
+
+    [Inject]
+    private ArtsofteDbManager _dbManager { get; set; }
+
+    private IEnumerable<ProgrammingLanguage> _model;
+    private IList<ProgrammingLanguage> selected;
+
+    async void ClearSelection()
+    {
+        selected = null;
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        _model = _dbManager.AllProgrammingLanguage();
+        if (_model.Any())
+        {
+            selected = _model.Take(1).ToList();
+            edit = "/EditProgrammingLanguage/" + selected.First().Id;
+        }
+        else
+        {
+            noData = true;
+            edit = "/EditProgrammingLanguage/-1";
+        }
+        load = true;
+    }
+
+    private async Task DeleteLanguage()
+    {
+        await _dbManager.DeleteProgrammingLanguage(selected.First().Id);
+        uriHelper.NavigateTo(uriHelper.Uri, forceLoad: true);
+    }
+}
